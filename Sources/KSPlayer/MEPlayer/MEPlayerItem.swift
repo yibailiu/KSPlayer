@@ -476,10 +476,10 @@ extension MEPlayerItem {
                     timeStamp = position + increase
                 } else {
                     increase *= Int64(AV_TIME_BASE)
-                    timeStamp = Int64(time.seconds) * Int64(AV_TIME_BASE) + increase
+                    timeStamp = Int64((seekToTime + startTime.seconds) * Double(AV_TIME_BASE))
                 }
-                let seekMin = increase > 0 ? timeStamp - increase + 2 : Int64.min
-                let seekMax = increase < 0 ? timeStamp - increase - 2 : Int64.max
+                let seekMin = seekByBytes && increase > 0 ? timeStamp - increase + 2 : Int64.min
+                let seekMax = seekByBytes ? (increase < 0 ? timeStamp - increase - 2 : Int64.max) : timeStamp
                 // can not seek to key frame
                 let seekStartTime = CACurrentMediaTime()
                 var result = avformat_seek_file(formatCtx, -1, seekMin, timeStamp, seekMax, seekFlags)
