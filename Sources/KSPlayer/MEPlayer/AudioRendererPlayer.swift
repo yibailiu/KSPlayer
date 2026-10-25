@@ -9,6 +9,7 @@ import AVFoundation
 import Foundation
 
 public class AudioRendererPlayer: AudioOutput {
+    public var automaticallyManagesAudioSession = true
     public var playbackRate: Float = 1 {
         didSet {
             if !isPaused {
@@ -56,8 +57,10 @@ public class AudioRendererPlayer: AudioOutput {
 
     public func prepare(audioFormat: AVAudioFormat) {
         #if !os(macOS)
-        try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(Int(audioFormat.channelCount))
-        KSLog("[audio] set preferredOutputNumberOfChannels: \(audioFormat.channelCount)")
+        if self.automaticallyManagesAudioSession {
+            try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(Int(audioFormat.channelCount))
+            KSLog("[audio] set preferredOutputNumberOfChannels: \(audioFormat.channelCount)")
+        }
         #endif
     }
 
@@ -133,7 +136,8 @@ public class AudioRendererPlayer: AudioOutput {
                 renderer.audioTimePitchAlgorithm = channelCount > 2 ? .spectral : .timeDomain
                 renderer.enqueue(sampleBuffer)
                 #if !os(macOS)
-                if AVAudioSession.sharedInstance().preferredInputNumberOfChannels != channelCount {
+                if automaticallyManagesAudioSession,
+                   AVAudioSession.sharedInstance().preferredInputNumberOfChannels != channelCount {
                     try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(Int(channelCount))
                 }
                 #endif

@@ -15,6 +15,9 @@ import OSLog
 import UIKit
 #endif
 open class KSOptions {
+    /// Set false when the application owns activation and output-channel preferences.
+    public var automaticallyManagesAudioSession = true
+
     /// 最低缓存视频时间
     @Published
     public var preferredForwardBufferDuration = KSOptions.preferredForwardBufferDuration

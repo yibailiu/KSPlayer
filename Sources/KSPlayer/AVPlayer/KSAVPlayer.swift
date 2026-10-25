@@ -212,7 +212,7 @@ public class KSAVPlayer {
     #endif
 
     public required init(url: URL, options: KSOptions) {
-        KSOptions.setAudioSession()
+        if options.automaticallyManagesAudioSession { KSOptions.setAudioSession() }
         urlAsset = AVURLAsset(url: url, options: options.avOptions)
         self.options = options
         itemObservation = player.observe(\.currentItem) { [weak self] player, _ in

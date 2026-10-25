@@ -10,6 +10,7 @@ import AVFAudio
 import CoreAudio
 
 public final class AudioUnitPlayer: AudioOutput {
+    public var automaticallyManagesAudioSession = true
     private var audioUnitForOutput: AudioUnit!
     private var currentRenderReadOffset = UInt32(0)
     private var sourceNodeAudioFormat: AVAudioFormat?
@@ -68,8 +69,10 @@ public final class AudioUnitPlayer: AudioOutput {
         }
         sourceNodeAudioFormat = audioFormat
         #if !os(macOS)
-        try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(Int(audioFormat.channelCount))
-        KSLog("[audio] set preferredOutputNumberOfChannels: \(audioFormat.channelCount)")
+        if self.automaticallyManagesAudioSession {
+            try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(Int(audioFormat.channelCount))
+            KSLog("[audio] set preferredOutputNumberOfChannels: \(audioFormat.channelCount)")
+        }
         #endif
         sampleSize = audioFormat.sampleSize
         var audioStreamBasicDescription = audioFormat.formatDescription.audioStreamBasicDescription

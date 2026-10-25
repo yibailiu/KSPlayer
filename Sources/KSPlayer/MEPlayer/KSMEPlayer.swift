@@ -115,7 +115,7 @@ public class KSMEPlayer: NSObject {
     }
 
     public required init(url: URL, options: KSOptions) {
-        KSOptions.setAudioSession()
+        if options.automaticallyManagesAudioSession { KSOptions.setAudioSession() }
         audioOutput = KSOptions.audioPlayerType.init()
         playerItem = MEPlayerItem(url: url, options: options)
         if options.videoDisable {
@@ -125,6 +125,7 @@ public class KSMEPlayer: NSObject {
         }
         self.options = options
         super.init()
+        audioOutput.automaticallyManagesAudioSession = options.automaticallyManagesAudioSession
         playerItem.delegate = self
         audioOutput.renderSource = playerItem
         videoOutput?.renderSource = playerItem
@@ -139,7 +140,9 @@ public class KSMEPlayer: NSObject {
 
     deinit {
         #if !os(macOS)
-        try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(2)
+        if options.automaticallyManagesAudioSession {
+            try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(2)
+        }
         #endif
         NotificationCenter.default.removeObserver(self)
         videoOutput?.invalidate()
@@ -326,6 +329,7 @@ extension KSMEPlayer: MediaPlayerProtocol {
             videoOutput?.displayLayerDelegate = self
         }
         self.options = options
+        audioOutput.automaticallyManagesAudioSession = options.automaticallyManagesAudioSession
         playerItem.delegate = self
         audioOutput.flush()
         audioOutput.renderSource = playerItem

@@ -9,11 +9,20 @@ import AVFoundation
 import CoreAudio
 
 public protocol AudioOutput: FrameOutput {
+    var automaticallyManagesAudioSession: Bool { get set }
     var playbackRate: Float { get set }
     var volume: Float { get set }
     var isMuted: Bool { get set }
     init()
     func prepare(audioFormat: AVAudioFormat)
+}
+
+// Preserve source compatibility for external AudioOutput implementations.
+public extension AudioOutput {
+    var automaticallyManagesAudioSession: Bool {
+        get { true }
+        set {}
+    }
 }
 
 public protocol AudioDynamicsProcessor {
@@ -101,6 +110,7 @@ public final class AudioEngineDynamicsPlayer: AudioEnginePlayer, AudioDynamicsPr
 }
 
 public class AudioEnginePlayer: AudioOutput {
+    public var automaticallyManagesAudioSession = true
     public let engine = AVAudioEngine()
     private var sourceNode: AVAudioSourceNode?
     private var sourceNodeAudioFormat: AVAudioFormat?
@@ -165,8 +175,10 @@ public class AudioEnginePlayer: AudioOutput {
         }
         sourceNodeAudioFormat = audioFormat
         #if !os(macOS)
-        try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(Int(audioFormat.channelCount))
-        KSLog("[audio] set preferredOutputNumberOfChannels: \(audioFormat.channelCount)")
+        if self.automaticallyManagesAudioSession {
+            try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(Int(audioFormat.channelCount))
+            KSLog("[audio] set preferredOutputNumberOfChannels: \(audioFormat.channelCount)")
+        }
         #endif
         KSLog("[audio] outputFormat AudioFormat: \(audioFormat)")
         if let channelLayout = audioFormat.channelLayout {

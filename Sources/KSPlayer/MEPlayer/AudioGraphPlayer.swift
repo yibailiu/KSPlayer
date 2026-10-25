@@ -10,6 +10,7 @@ import AVFAudio
 import CoreAudio
 
 public final class AudioGraphPlayer: AudioOutput, AudioDynamicsProcessor {
+    public var automaticallyManagesAudioSession = true
     public private(set) var audioUnitForDynamicsProcessor: AudioUnit
     private let graph: AUGraph
     private var audioUnitForMixer: AudioUnit!
@@ -158,8 +159,10 @@ public final class AudioGraphPlayer: AudioOutput, AudioDynamicsProcessor {
         }
         sourceNodeAudioFormat = audioFormat
         #if !os(macOS)
-        try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(Int(audioFormat.channelCount))
-        KSLog("[audio] set preferredOutputNumberOfChannels: \(audioFormat.channelCount)")
+        if self.automaticallyManagesAudioSession {
+            try? AVAudioSession.sharedInstance().setPreferredOutputNumberOfChannels(Int(audioFormat.channelCount))
+            KSLog("[audio] set preferredOutputNumberOfChannels: \(audioFormat.channelCount)")
+        }
         #endif
         sampleSize = audioFormat.sampleSize
         var audioStreamBasicDescription = audioFormat.formatDescription.audioStreamBasicDescription
