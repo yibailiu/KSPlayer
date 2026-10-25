@@ -150,7 +150,16 @@ class FFmpegDecode: DecodeProtocol {
                         frame.size = packet.size
                         frame.position = packet.position
                         frame.duration = avframe.pointee.duration
-                        if frame.duration == 0, avframe.pointee.sample_rate != 0, frame.timebase.num != 0 {
+                        // Filtered PCM duration may be a sample count while the
+                        // frame retains the container timebase (e.g. Matroska ms).
+                        // Normalize before accurate-seek preroll filtering, not
+                        // only when the frame reaches the audio output.
+                        if let audio = frame as? AudioFrame,
+                           audio.numberOfSamples > 0, audio.audioFormat.sampleRate > 0,
+                           frame.timebase.num > 0, frame.timebase.den > 0 {
+                            frame.duration = av_rescale_q(Int64(audio.numberOfSamples),
+                                AVRational(num: 1, den: Int32(audio.audioFormat.sampleRate)), frame.timebase.rational)
+                        } else if frame.duration == 0, avframe.pointee.sample_rate != 0, frame.timebase.num != 0 {
                             frame.duration = Int64(avframe.pointee.nb_samples) * Int64(frame.timebase.den) / (Int64(avframe.pointee.sample_rate) * Int64(frame.timebase.num))
                         }
                         var timestamp = avframe.pointee.best_effort_timestamp
